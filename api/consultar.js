@@ -63,7 +63,7 @@ export default async function handler(req, res) {
         6. **Plano de Ação para Migração:** Destaque os pontos de atenção críticos para um técnico que fará a migração deste ambiente.
         `;
 
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
         const aiResult = await model.generateContent(prompt);
         
         res.status(200).json({
