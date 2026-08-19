@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Domain Diagnostic AI</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --text-color: #f8fafc;
+            --accent-color: #3b82f6;
+            --border-color: #334155;
+            --card-bg: #1e293b;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+        }
+
+        h1 {
+            text-align: center;
+            background: linear-gradient(to right, #60a5fa, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 2rem;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-color);
+            color: var(--text-color);
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            border-color: var(--accent-color);
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            border: none;
+            background: var(--accent-color);
+            color: white;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+
+        button:hover {
+            background: #2563eb;
+        }
+        
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        #loading {
+            display: none;
+            text-align: center;
+            margin: 2rem 0;
+            font-style: italic;
+            color: #94a3b8;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-bottom: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        #result {
+            display: none;
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            line-height: 1.6;
+        }
+
+        .error {
+            color: #ef4444;
+            background: #450a0a;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid #7f1d1d;
+            display: none;
+            margin-bottom: 1rem;
+        }
+
+        /* Basic Markdown Styles */
+        #result h1, #result h2, #result h3 {
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+            color: #e2e8f0;
+            text-align: left;
+            -webkit-text-fill-color: initial;
+            background: none;
+        }
+        
+        #result p { margin-bottom: 1em; }
+        #result ul, #result ol { margin-bottom: 1em; padding-left: 20px; }
+        #result li { margin-bottom: 0.25em; }
+        #result code { background: #0f172a; padding: 0.2em 0.4em; border-radius: 4px; font-family: monospace; }
+        #result pre { background: #0f172a; padding: 1em; border-radius: 8px; overflow-x: auto; }
+    </style>
+    <!-- Incluir biblioteca marked para converter Markdown em HTML -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Domain Diagnostic AI</h1>
+        
+        <div class="search-box">
+            <input type="text" id="domainInput" placeholder="Ex: google.com" autocomplete="off" spellcheck="false" required>
+            <button id="searchBtn" onclick="consultarDominio()">Analisar</button>
+        </div>
+
+        <div id="errorBox" class="error"></div>
+
+        <div id="loading">
+            <div class="loading-spinner"></div>
+            <div>Analisando infraestrutura e gerando relatório IA... Isso pode levar alguns segundos.</div>
+        </div>
+
+        <div id="result">
+            <div id="reportContent"></div>
+        </div>
+    </div>
+
+    <script>
+        async function consultarDominio() {
+            const domainInput = document.getElementById('domainInput');
+            const searchBtn = document.getElementById('searchBtn');
+            const loading = document.getElementById('loading');
+            const result = document.getElementById('result');
+            const errorBox = document.getElementById('errorBox');
+            const reportContent = document.getElementById('reportContent');
+
+            const dominio = domainInput.value.trim();
+
+            if (!dominio) {
+                showError('Por favor, digite um domínio válido.');
+                return;
+            }
+
+            // Reset state
+            errorBox.style.display = 'none';
+            result.style.display = 'none';
+            loading.style.display = 'block';
+            searchBtn.disabled = true;
+            domainInput.disabled = true;
+
+            try {
+                // Determine API URL based on environment
+                const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+                    ? \`http://\${window.location.host}/api/consultar?dominio=\${encodeURIComponent(dominio)}\`
+                    : \`/api/consultar?dominio=\${encodeURIComponent(dominio)}\`;
+
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.erro || 'Ocorreu um erro ao consultar o domínio.');
+                }
+
+                // Render Markdown using marked.js
+                reportContent.innerHTML = marked.parse(data.relatorio_ia);
+                
+                loading.style.display = 'none';
+                result.style.display = 'block';
+            } catch (error) {
+                loading.style.display = 'none';
+                showError(error.message);
+            } finally {
+                searchBtn.disabled = false;
+                domainInput.disabled = false;
+            }
+        }
+
+        // Add Enter key listener
+        document.getElementById('domainInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                consultarDominio();
+            }
+        });
+        
+        function showError(msg) {
+            const errorBox = document.getElementById('errorBox');
+            errorBox.textContent = msg;
+            errorBox.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
