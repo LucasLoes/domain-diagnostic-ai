@@ -41,7 +41,7 @@ export default async function handler(req, res) {
         }
 
         const prompt = `
-        Atue como um Engenheiro de Infraestrutura Cloud e Especialista em Migrações de E-mail corporativo.
+        Atue como um Engenheiro de Infraestrutura Cloud e Especialista em Migrações e Inteligência de Negócios (Pré-vendas).
         Analise o domínio: ${dominio}.
 
         Dados DNS Coletados:
@@ -54,16 +54,28 @@ export default async function handler(req, res) {
         Dados RDAP (Titularidade):
         ${JSON.stringify(whoisData.entities ? whoisData.entities : 'Dados de titular ocultos pela LGPD')}
 
-        Sua tarefa é fornecer um relatório técnico em Markdown com a seguinte estrutura:
-        1. **Propriedade do Domínio:** Quem é o titular (caso disponível no RDAP).
-        2. **Infraestrutura de Hospedagem:** Analise os NS e apontamentos A. Identifique o provedor real (ex: desmascare NS genéricos se aplicável).
-        3. **Serviço de E-mail Atual:** Identifique o provedor de e-mail pelos registros MX.
-        4. **Saúde de Entregabilidade:** Avalie se há DMARC e SPF configurados nos TXTs.
-        5. **Histórico Google Workspace:** Verifique nos registros TXT se existe 'google-site-verification'.
-        6. **Plano de Ação para Migração:** Destaque os pontos de atenção críticos para um técnico que fará a migração deste ambiente.
+        Sua tarefa é fornecer um relatório em Markdown estruturado para duas audiências: a **Equipe Comercial** e a **Equipe Técnica**. 
+        O objetivo é que a equipe comercial tenha "insights" (gatilhos de vendas) antes da reunião, e a equipe técnica saiba exatamente com o que está lidando.
+
+        ### 🎯 VISÃO COMERCIAL (Business Intelligence & Insights)
+        Esta seção deve ser de fácil entendimento para o time de vendas.
+        1. **Stack Tecnológico Identificado:** Analise profundamente os registros TXT, SPF e MX para descobrir os sistemas integrados ao domínio do cliente. Liste-os claramente:
+           - **Sistemas de E-mail Marketing e Automação:** (ex: Mailchimp, RD Station, ActiveCampaign, SendGrid, Amazon SES, etc.) encontrados no SPF.
+           - **Sistemas ERP / CRM / Atendimento:** Ferramentas de gestão ou validações de domínio (ex: Zendesk, Salesforce, etc.).
+           - **E-commerce / Plataforma Web:** Validações de ferramentas como Shopify, Vtex, Facebook Domain Verification, Google Search Console, etc.
+        2. **Dores Potenciais e Oportunidades de Venda:** Com base no cenário atual (ex: e-mail básico vs. corporativo, ausência de segurança DMARC, uso de múltiplas ferramentas de marketing), o que a equipe comercial pode oferecer? Forneça argumentos práticos de venda (ex: "O cliente usa Titan Email, uma oportunidade para oferecer Google Workspace/Microsoft 365 para maior produtividade", "Falta DMARC, oportunidade de vender consultoria de segurança de e-mail").
+
+        ### ⚙️ ANÁLISE TÉCNICA DE INFRAESTRUTURA
+        Esta seção é para o analista que conduzirá a migração/suporte.
+        3. **Propriedade do Domínio:** Quem é o titular (dados do RDAP, se disponíveis).
+        4. **Infraestrutura de Hospedagem:** Analise os NS e registros A para identificar o provedor real (ex: HostGator, AWS, Cloudflare).
+        5. **Serviço de E-mail Atual:** Identifique precisamente o provedor pelos registros MX.
+        6. **Saúde de Entregabilidade (SPF/DMARC):** Avalie criticamente. O SPF está bem construído? O DMARC existe e qual a política (none, quarantine, reject)?
+        7. **Histórico de Plataformas:** Verifique registros TXT em busca de indícios de uso de Google Workspace ('google-site-verification') ou Microsoft 365.
+        8. **Plano de Ação (Migração):** Destaque os riscos e os pontos de atenção críticos (ex: redução de TTL, backup de contas, configurações específicas) para uma eventual migração.
         `;
 
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
         const aiResult = await model.generateContent(prompt);
         
         res.status(200).json({
