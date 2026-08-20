@@ -91,6 +91,9 @@ export default async function handler(req, res) {
              return res.status(500).json({ erro: 'A chave de API do Gemini configurada na Vercel é inválida (ela geralmente começa com AIza...). Acesse o Google AI Studio para gerar uma válida.' });
         }
         
-        res.status(500).json({ erro: 'Erro interno no servidor ao processar a análise.' });
+        res.status(500).json({ 
+            erro: 'Erro interno no servidor ao processar a análise.',
+            detalhe: error.message || error.toString()
+        });
     }
 }
