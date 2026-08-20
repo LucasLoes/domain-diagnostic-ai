@@ -30,6 +30,26 @@ export default async function handler(req, res) {
         dnsData.TXT = await safeResolve(dns.resolveTxt, dominio);
         dnsData.DMARC = await safeResolve(dns.resolveTxt, `_dmarc.${dominio}`);
 
+        let webStatus = null;
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 3000);
+            const httpResponse = await fetch(`https://${dominio}`, {
+                method: 'HEAD',
+                signal: controller.signal,
+                headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
+            });
+            clearTimeout(timeoutId);
+            webStatus = {
+                status: httpResponse.status,
+                statusText: httpResponse.statusText,
+                server: httpResponse.headers.get('server') || 'Desconhecido',
+                poweredBy: httpResponse.headers.get('x-powered-by') || 'Não informado'
+            };
+        } catch(e) {
+            webStatus = { erro: 'Inacessível / Timeout' };
+        }
+
         let whoisData = {};
         try {
             const rdapResponse = await fetch(`https://rdap.registro.br/domain/${dominio}`, {
@@ -87,6 +107,7 @@ export default async function handler(req, res) {
         - TXT: ${JSON.stringify(dnsData.TXT)}
         - DMARC: ${JSON.stringify(dnsData.DMARC)}
         Dados Titularidade (RDAP): ${JSON.stringify(whoisData)}
+        Status HTTP Web: ${JSON.stringify(webStatus)}
         Dados CNPJ: ${cnpjData ? JSON.stringify(cnpjData) : 'Não informado'}
         Dados CEP: ${cepData ? JSON.stringify(cepData) : 'Não informado'}
 
@@ -101,6 +122,7 @@ export default async function handler(req, res) {
         * **Datas:** (Data de criação do domínio e data da última alteração).
         * **Provedor DNS:** (Definido exclusivamente pelo servidor NS).
         * **Hospedagem do Site:** (Provedor de hospedagem descoberto analisando o apontamento do tipo A).
+        * **Status Web:** (Relatar se responde HTTP 200, servidor usado ou se falhou baseado no Status HTTP Web).
         * **E-mail Atual:** (Servidor de e-mails definido exclusivamente pelos registros MX).
         * **Segurança:** (Status do SPF e DMARC).
         * **Atenção:** (Somente riscos críticos para migração, se houver).
@@ -120,7 +142,7 @@ export default async function handler(req, res) {
         
         res.status(200).json({
             dominio,
-            dados_brutos: { dns: dnsData, rdap: whoisData.entities || "Não público", cnpj: cnpjData, cep: cepData },
+            dados_brutos: { dns: dnsData, rdap: whoisData.entities || "Não público", web: webStatus, cnpj: cnpjData, cep: cepData },
             relatorio_ia: aiResult.response.text()
         });
 

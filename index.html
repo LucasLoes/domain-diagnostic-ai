@@ -147,9 +147,58 @@
         #result li { margin-bottom: 0.25em; }
         #result code { background: #0f172a; padding: 0.2em 0.4em; border-radius: 4px; font-family: monospace; }
         #result pre { background: #0f172a; padding: 1em; border-radius: 8px; overflow-x: auto; }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+            justify-content: flex-end;
+        }
+
+        .action-buttons button {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+        }
+
+        .action-buttons button:hover {
+            background: var(--border-color);
+        }
+
+        .history-section {
+            width: 100%;
+            margin-top: 3rem;
+        }
+
+        .history-section h2 {
+            font-size: 1.2rem;
+            color: #94a3b8;
+            margin-bottom: 1rem;
+        }
+
+        .history-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .history-tag {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background-color 0.2s;
+        }
+
+        .history-tag:hover {
+            background: var(--border-color);
+        }
     </style>
     <!-- Incluir biblioteca marked para converter Markdown em HTML -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -175,6 +224,15 @@
 
         <div id="result">
             <div id="reportContent"></div>
+            <div class="action-buttons">
+                <button onclick="copiarRelatorio()">Copiar Relatório</button>
+                <button onclick="baixarPDF()">Baixar PDF</button>
+            </div>
+        </div>
+
+        <div class="history-section" id="historySection" style="display: none;">
+            <h2>Consultas Recentes</h2>
+            <div class="history-list" id="historyList"></div>
         </div>
     </div>
 
@@ -229,6 +287,8 @@
                 
                 loading.style.display = 'none';
                 result.style.display = 'block';
+
+                addToHistory(dominio, data.relatorio_ia);
             } catch (error) {
                 loading.style.display = 'none';
                 showError(error.message);
@@ -255,6 +315,67 @@
             errorBox.textContent = msg;
             errorBox.style.display = 'block';
         }
+
+        function copiarRelatorio() {
+            const reportText = document.getElementById('reportContent').innerText;
+            navigator.clipboard.writeText(reportText).then(() => {
+                alert('Relatório copiado para a área de transferência!');
+            });
+        }
+
+        function baixarPDF() {
+            const element = document.getElementById('reportContent');
+            const domainValue = document.getElementById('domainInput').value.trim() || 'dominio';
+            const opt = {
+                margin:       0.5,
+                filename:     `diagnostico-${domainValue}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
+            html2pdf().set(opt).from(element).save();
+        }
+
+        let history = JSON.parse(localStorage.getItem('domainHistory') || '[]');
+
+        function renderHistory() {
+            const historySection = document.getElementById('historySection');
+            const historyList = document.getElementById('historyList');
+            if (history.length === 0) {
+                historySection.style.display = 'none';
+                return;
+            }
+            historySection.style.display = 'block';
+            historyList.innerHTML = '';
+            history.forEach((item, index) => {
+                const tag = document.createElement('div');
+                tag.className = 'history-tag';
+                tag.textContent = item.dominio;
+                tag.onclick = () => carregarDoHistorico(index);
+                historyList.appendChild(tag);
+            });
+        }
+
+        function carregarDoHistorico(index) {
+            const item = history[index];
+            document.getElementById('domainInput').value = item.dominio;
+            document.getElementById('cnpjInput').value = '';
+            document.getElementById('cepInput').value = '';
+            document.getElementById('reportContent').innerHTML = marked.parse(item.relatorio_ia);
+            document.getElementById('result').style.display = 'block';
+            document.getElementById('errorBox').style.display = 'none';
+            window.scrollTo({ top: document.getElementById('result').offsetTop, behavior: 'smooth' });
+        }
+
+        function addToHistory(dominio, relatorio_ia) {
+            history = history.filter(h => h.dominio !== dominio);
+            history.unshift({ dominio, relatorio_ia, data: new Date().toISOString() });
+            if (history.length > 10) history.pop();
+            localStorage.setItem('domainHistory', JSON.stringify(history));
+            renderHistory();
+        }
+
+        renderHistory();
     </script>
 </body>
 </html>
