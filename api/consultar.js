@@ -32,7 +32,9 @@ export default async function handler(req, res) {
 
         let whoisData = {};
         try {
-            const rdapResponse = await fetch(`https://rdap.registro.br/domain/${dominio}`);
+            const rdapResponse = await fetch(`https://rdap.registro.br/domain/${dominio}`, {
+                headers: { 'User-Agent': 'DomainDiagnosticAI/1.0' }
+            });
             if (rdapResponse.ok) {
                 whoisData = await rdapResponse.json();
             }
@@ -45,7 +47,9 @@ export default async function handler(req, res) {
             const cleanCnpj = cnpj.replace(/\D/g, '');
             if (cleanCnpj.length === 14) {
                 try {
-                    const cnpjResponse = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cleanCnpj}`);
+                    const cnpjResponse = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cleanCnpj}`, {
+                        headers: { 'User-Agent': 'DomainDiagnosticAI/1.0' }
+                    });
                     if (cnpjResponse.ok) {
                         cnpjData = await cnpjResponse.json();
                     }
@@ -60,7 +64,9 @@ export default async function handler(req, res) {
             const cleanCep = cep.replace(/\D/g, '');
             if (cleanCep.length === 8) {
                 try {
-                    const cepResponse = await fetch(`https://brasilapi.com.br/api/cep/v2/${cleanCep}`);
+                    const cepResponse = await fetch(`https://brasilapi.com.br/api/cep/v2/${cleanCep}`, {
+                        headers: { 'User-Agent': 'DomainDiagnosticAI/1.0' }
+                    });
                     if (cepResponse.ok) {
                         cepData = await cepResponse.json();
                     }
