@@ -50,7 +50,7 @@ export default async function handler(req, res) {
         - NS: ${JSON.stringify(dnsData.NS)}
         - TXT: ${JSON.stringify(dnsData.TXT)}
         - DMARC: ${JSON.stringify(dnsData.DMARC)}
-        Dados Titularidade: ${JSON.stringify(whoisData.entities ? whoisData.entities : 'Oculto')}
+        Dados Titularidade (RDAP): ${JSON.stringify(whoisData)}
 
         Estruture em Markdown:
 
@@ -59,8 +59,11 @@ export default async function handler(req, res) {
         * **Oportunidades:** (Principais gatilhos de venda, ex: vender upgrade de e-mail ou consultoria de segurança).
 
         ### ⚙️ Visão Técnica (Resumo)
-        * **Infraestrutura/DNS:** (Onde está hospedado).
-        * **E-mail Atual:** (Provedor em uso).
+        * **Contatos do Domínio:** (Nome e e-mail do titular e do contato técnico do Registro.br).
+        * **Datas:** (Data de criação do domínio e data da última alteração).
+        * **Provedor DNS:** (Definido exclusivamente pelo servidor NS).
+        * **Hospedagem do Site:** (Provedor de hospedagem descoberto analisando o apontamento do tipo A).
+        * **E-mail Atual:** (Servidor de e-mails definido exclusivamente pelos registros MX).
         * **Segurança:** (Status do SPF e DMARC).
         * **Atenção:** (Somente riscos críticos para migração, se houver).
         `;
