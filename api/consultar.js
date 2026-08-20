@@ -11,7 +11,7 @@ export default async function handler(req, res) {
         return res.status(200).end();
     }
 
-    const { dominio } = req.query;
+    const { dominio, cnpj, cep } = req.query;
 
     if (!dominio) {
         return res.status(400).json({ erro: 'Domínio não fornecido na querystring.' });
@@ -40,6 +40,36 @@ export default async function handler(req, res) {
             console.log("Falha ao resolver RDAP");
         }
 
+        let cnpjData = null;
+        if (cnpj) {
+            const cleanCnpj = cnpj.replace(/\D/g, '');
+            if (cleanCnpj.length === 14) {
+                try {
+                    const cnpjResponse = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cleanCnpj}`);
+                    if (cnpjResponse.ok) {
+                        cnpjData = await cnpjResponse.json();
+                    }
+                } catch(e) {
+                    console.log("Falha ao consultar CNPJ");
+                }
+            }
+        }
+
+        let cepData = null;
+        if (cep) {
+            const cleanCep = cep.replace(/\D/g, '');
+            if (cleanCep.length === 8) {
+                try {
+                    const cepResponse = await fetch(`https://brasilapi.com.br/api/cep/v2/${cleanCep}`);
+                    if (cepResponse.ok) {
+                        cepData = await cepResponse.json();
+                    }
+                } catch(e) {
+                    console.log("Falha ao consultar CEP");
+                }
+            }
+        }
+
         const prompt = `
         Analise o domínio: ${dominio}.
         ATENÇÃO: O relatório deve ser um RESUMO RÁPIDO, CURTO e DIRETO AO ASSUNTO, contendo SOMENTE os pontos mais importantes para consulta rápida. Use bullet points curtos. Sem introduções ou conclusões longas.
@@ -51,6 +81,8 @@ export default async function handler(req, res) {
         - TXT: ${JSON.stringify(dnsData.TXT)}
         - DMARC: ${JSON.stringify(dnsData.DMARC)}
         Dados Titularidade (RDAP): ${JSON.stringify(whoisData)}
+        Dados CNPJ: ${cnpjData ? JSON.stringify(cnpjData) : 'Não informado'}
+        Dados CEP: ${cepData ? JSON.stringify(cepData) : 'Não informado'}
 
         Estruture em Markdown:
 
@@ -66,6 +98,15 @@ export default async function handler(req, res) {
         * **E-mail Atual:** (Servidor de e-mails definido exclusivamente pelos registros MX).
         * **Segurança:** (Status do SPF e DMARC).
         * **Atenção:** (Somente riscos críticos para migração, se houver).
+
+        ### 🏢 Análise da Empresa (CNPJ)
+        * **Status:** (Ativa/Inativa e razão social - se CNPJ fornecido)
+        * **Idade & Capital:** (Data de abertura e capital social - se CNPJ fornecido)
+        * **Atividades:** (CNAE principal - se CNPJ fornecido)
+        * **Sócios:** (Principais nomes - se CNPJ fornecido)
+        
+        ### 📍 Localização (CEP)
+        * **Endereço:** (Rua, bairro, cidade, estado e coordenadas se houver - se CEP fornecido)
         `;
 
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
@@ -73,7 +114,7 @@ export default async function handler(req, res) {
         
         res.status(200).json({
             dominio,
-            dados_brutos: { dns: dnsData, rdap: whoisData.entities || "Não público" },
+            dados_brutos: { dns: dnsData, rdap: whoisData.entities || "Não público", cnpj: cnpjData, cep: cepData },
             relatorio_ia: aiResult.response.text()
         });
 

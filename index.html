@@ -155,9 +155,15 @@
     <div class="container">
         <h1>Domain Diagnostic AI</h1>
         
-        <div class="search-box">
-            <input type="text" id="domainInput" placeholder="Ex: google.com" autocomplete="off" spellcheck="false" required>
-            <button id="searchBtn" onclick="consultarDominio()">Analisar</button>
+        <div class="search-box" style="flex-direction: column;">
+            <div style="display: flex; gap: 1rem; width: 100%;">
+                <input type="text" id="domainInput" placeholder="Ex: google.com (Obrigatório)" autocomplete="off" spellcheck="false" required style="flex: 2;">
+                <button id="searchBtn" onclick="consultarDominio()">Analisar</button>
+            </div>
+            <div style="display: flex; gap: 1rem; width: 100%;">
+                <input type="text" id="cnpjInput" placeholder="CNPJ (Opcional)" autocomplete="off" spellcheck="false">
+                <input type="text" id="cepInput" placeholder="CEP (Opcional)" autocomplete="off" spellcheck="false">
+            </div>
         </div>
 
         <div id="errorBox" class="error"></div>
@@ -175,6 +181,8 @@
     <script>
         async function consultarDominio() {
             const domainInput = document.getElementById('domainInput');
+            const cnpjInput = document.getElementById('cnpjInput');
+            const cepInput = document.getElementById('cepInput');
             const searchBtn = document.getElementById('searchBtn');
             const loading = document.getElementById('loading');
             const result = document.getElementById('result');
@@ -182,6 +190,8 @@
             const reportContent = document.getElementById('reportContent');
 
             const dominio = domainInput.value.trim();
+            const cnpj = cnpjInput.value.trim();
+            const cep = cepInput.value.trim();
 
             if (!dominio) {
                 showError('Por favor, digite um domínio válido.');
@@ -194,12 +204,18 @@
             loading.style.display = 'block';
             searchBtn.disabled = true;
             domainInput.disabled = true;
+            cnpjInput.disabled = true;
+            cepInput.disabled = true;
 
             try {
                 // Determine API URL based on environment
+                let queryParams = `?dominio=${encodeURIComponent(dominio)}`;
+                if (cnpj) queryParams += `&cnpj=${encodeURIComponent(cnpj)}`;
+                if (cep) queryParams += `&cep=${encodeURIComponent(cep)}`;
+
                 const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-                    ? `http://${window.location.host}/api/consultar?dominio=${encodeURIComponent(dominio)}`
-                    : `/api/consultar?dominio=${encodeURIComponent(dominio)}`;
+                    ? `http://${window.location.host}/api/consultar${queryParams}`
+                    : `/api/consultar${queryParams}`;
 
                 const response = await fetch(apiUrl);
                 const data = await response.json();
@@ -219,15 +235,20 @@
             } finally {
                 searchBtn.disabled = false;
                 domainInput.disabled = false;
+                cnpjInput.disabled = false;
+                cepInput.disabled = false;
             }
         }
 
         // Add Enter key listener
-        document.getElementById('domainInput').addEventListener('keypress', function(e) {
+        function handleKeyPress(e) {
             if (e.key === 'Enter') {
                 consultarDominio();
             }
-        });
+        }
+        document.getElementById('domainInput').addEventListener('keypress', handleKeyPress);
+        document.getElementById('cnpjInput').addEventListener('keypress', handleKeyPress);
+        document.getElementById('cepInput').addEventListener('keypress', handleKeyPress);
         
         function showError(msg) {
             const errorBox = document.getElementById('errorBox');
