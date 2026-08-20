@@ -75,7 +75,7 @@ export default async function handler(req, res) {
         8. **Plano de Ação (Migração):** Destaque os riscos e os pontos de atenção críticos (ex: redução de TTL, backup de contas, configurações específicas) para uma eventual migração.
         `;
 
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
         const aiResult = await model.generateContent(prompt);
         
         res.status(200).json({
