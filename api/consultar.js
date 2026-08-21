@@ -99,6 +99,7 @@ export default async function handler(req, res) {
         const prompt = `
         Analise o domínio: ${dominio}.
         ATENÇÃO: O relatório deve ser um RESUMO RÁPIDO, CURTO e DIRETO AO ASSUNTO, contendo SOMENTE os pontos mais importantes para consulta rápida. Use bullet points curtos. Sem introduções ou conclusões longas.
+        IMPORTANTE: O fortalecimento do DMARC (ex: mudar de p=none para p=reject) NÃO deve ser considerado como uma oportunidade de consultoria ou serviço. Essa decisão é exclusiva dos administradores de e-mail do cliente. Não sugira segurança de e-mail como oportunidade.
 
         Dados DNS:
         - A: ${JSON.stringify(dnsData.A)}
@@ -111,42 +112,45 @@ export default async function handler(req, res) {
         Dados CNPJ: ${cnpjData ? JSON.stringify(cnpjData) : 'Não informado'}
         Dados CEP: ${cepData ? JSON.stringify(cepData) : 'Não informado'}
 
+        Cruze as informações (ex: use os dados do CNPJ para preencher lacunas do domínio, como contatos, se o RDAP estiver vazio) para fornecer o relatório mais completo e apurado possível sobre as informações técnicas, administrativas e comerciais.
+
         Estruture em Markdown:
 
         ### 🎯 Visão Comercial (Resumo)
         * **Stack Atual:** (Ferramentas de email, CRM, e marketing identificadas).
-        * **Oportunidades:** (Principais gatilhos de venda, ex: vender upgrade de e-mail ou consultoria de segurança).
+        * **Oportunidades:** (Principais gatilhos de venda, ex: otimização de hospedagem, novo site, serviços digitais relacionados ao CNAE da empresa. NÃO oferte consultoria de e-mail ou DMARC).
 
         ### ⚙️ Visão Técnica (Resumo)
         * **Contatos do Domínio:**
-          - **Titular:** (Nome e e-mail do titular)
-          - **Técnico:** (Contato técnico do Registro.br)
+          - **Titular:** (Nome e e-mail do titular. Se RDAP vazio, use a Razão Social/Sócios do CNPJ)
+          - **Técnico:** (Contato técnico. Se RDAP vazio, verifique dados no CNPJ)
         * **Datas:**
-          - **Criação:** (Data de criação do domínio)
+          - **Criação:** (Data de criação do domínio ou abertura do CNPJ)
           - **Alteração:** (Data da última alteração)
           - **Expiração:** (Data de expiração, se houver)
         * **Provedor DNS:** (Definido exclusivamente pelo servidor NS).
-        * **Hospedagem do Site:** (Provedor de hospedagem descoberto analisando o apontamento do tipo A).
+        * **Hospedagem do Site:** (Provedor de hospedagem descoberto analisando o apontamento do tipo A e Status HTTP).
         * **Status Web:**
           - **Acesso:** (Responde HTTP 200, falhou, redirecionou, etc)
           - **Servidor:** (Qual servidor web reportado)
         * **E-mail Atual:** (Servidor de e-mails definido pelos registros MX).
         * **Segurança:**
-          - **SPF:** (Status)
-          - **DMARC:** (Status)
-        * **Atenção:** (Somente riscos críticos para migração, se houver).
+          - **SPF:** (Status da configuração)
+          - **DMARC:** (Status da política. Apenas reporte o que está configurado, sem classificar como fraca/insegura, pois isso é decisão do cliente).
+        * **Atenção:** (Somente riscos críticos operacionais, se houver).
 
         ### 🏢 Análise da Empresa (CNPJ)
-        * **Identificação:** (Ativa/Inativa e razão social - se CNPJ fornecido)
+        * **Identificação:** (Status e Razão Social exata)
         * **Dados Cadastrais:**
           - **Abertura:** (Data de abertura)
-          - **Capital Social:** (Valor em R$)
-        * **Atividade Principal:** (CNAE principal - se CNPJ fornecido)
+          - **Capital Social:** (Valor em R$ formatado)
+          - **Natureza Jurídica:** (Natureza informada)
+        * **Atividade Principal:** (Código CNAE e descrição da atividade)
         * **Sócios Principais:**
-          - (Nome do sócio e cargo - listar no máximo 3)
+          - (Nome do sócio e cargo/qualificação - listar até 3 principais)
         
         ### 📍 Localização (CEP)
-        * **Endereço:** (Rua, bairro, cidade, estado e coordenadas se houver - se CEP fornecido)
+        * **Endereço:** (Endereço completo baseado no CNPJ e CEP, incluindo coordenadas se disponíveis)
         `;
 
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
