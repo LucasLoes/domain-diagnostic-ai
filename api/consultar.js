@@ -118,20 +118,32 @@ export default async function handler(req, res) {
         * **Oportunidades:** (Principais gatilhos de venda, ex: vender upgrade de e-mail ou consultoria de segurança).
 
         ### ⚙️ Visão Técnica (Resumo)
-        * **Contatos do Domínio:** (Nome e e-mail do titular e do contato técnico do Registro.br).
-        * **Datas:** (Data de criação do domínio e data da última alteração).
+        * **Contatos do Domínio:**
+          - **Titular:** (Nome e e-mail do titular)
+          - **Técnico:** (Contato técnico do Registro.br)
+        * **Datas:**
+          - **Criação:** (Data de criação do domínio)
+          - **Alteração:** (Data da última alteração)
+          - **Expiração:** (Data de expiração, se houver)
         * **Provedor DNS:** (Definido exclusivamente pelo servidor NS).
         * **Hospedagem do Site:** (Provedor de hospedagem descoberto analisando o apontamento do tipo A).
-        * **Status Web:** (Relatar se responde HTTP 200, servidor usado ou se falhou baseado no Status HTTP Web).
-        * **E-mail Atual:** (Servidor de e-mails definido exclusivamente pelos registros MX).
-        * **Segurança:** (Status do SPF e DMARC).
+        * **Status Web:**
+          - **Acesso:** (Responde HTTP 200, falhou, redirecionou, etc)
+          - **Servidor:** (Qual servidor web reportado)
+        * **E-mail Atual:** (Servidor de e-mails definido pelos registros MX).
+        * **Segurança:**
+          - **SPF:** (Status)
+          - **DMARC:** (Status)
         * **Atenção:** (Somente riscos críticos para migração, se houver).
 
         ### 🏢 Análise da Empresa (CNPJ)
-        * **Status:** (Ativa/Inativa e razão social - se CNPJ fornecido)
-        * **Idade & Capital:** (Data de abertura e capital social - se CNPJ fornecido)
-        * **Atividades:** (CNAE principal - se CNPJ fornecido)
-        * **Sócios:** (Principais nomes - se CNPJ fornecido)
+        * **Identificação:** (Ativa/Inativa e razão social - se CNPJ fornecido)
+        * **Dados Cadastrais:**
+          - **Abertura:** (Data de abertura)
+          - **Capital Social:** (Valor em R$)
+        * **Atividade Principal:** (CNAE principal - se CNPJ fornecido)
+        * **Sócios Principais:**
+          - (Nome do sócio e cargo - listar no máximo 3)
         
         ### 📍 Localização (CEP)
         * **Endereço:** (Rua, bairro, cidade, estado e coordenadas se houver - se CEP fornecido)

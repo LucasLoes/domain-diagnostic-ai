@@ -4,17 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Domain Diagnostic AI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #0f172a;
-            --text-color: #f8fafc;
-            --accent-color: #3b82f6;
-            --border-color: #334155;
-            --card-bg: #1e293b;
+            --bg-color: #09090b; /* Zinc 950 */
+            --text-color: #ffffff;
+            --text-muted: #a1a1aa; /* Zinc 400 */
+            --accent-color: #6366f1; /* Indigo 500 */
+            --accent-hover: #4f46e5;
+            --border-color: #27272a; /* Zinc 800 */
+            --card-bg: #18181b; /* Zinc 900 */
+            --result-bg: #0c0a13; /* Very dark deep contrast */
         }
 
         body {
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            font-family: 'Outfit', system-ui, -apple-system, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
             margin: 0;
@@ -42,43 +48,54 @@
             display: flex;
             gap: 1rem;
             margin-bottom: 2rem;
-            background: var(--card-bg);
+            background: rgba(24, 24, 27, 0.7);
+            backdrop-filter: blur(10px);
             padding: 1.5rem;
-            border-radius: 12px;
+            border-radius: 16px;
             border: 1px solid var(--border-color);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s ease;
+        }
+
+        .search-box:hover {
+            transform: translateY(-2px);
         }
 
         input {
             flex: 1;
-            padding: 0.75rem 1rem;
-            border-radius: 8px;
+            padding: 0.85rem 1.2rem;
+            border-radius: 10px;
             border: 1px solid var(--border-color);
             background: var(--bg-color);
             color: var(--text-color);
             font-size: 1rem;
+            font-family: 'Outfit', sans-serif;
             outline: none;
-            transition: border-color 0.2s;
+            transition: all 0.3s ease;
         }
 
         input:focus {
             border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
         }
 
         button {
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
+            padding: 0.85rem 1.75rem;
+            border-radius: 10px;
             border: none;
-            background: var(--accent-color);
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
             color: white;
             font-weight: 600;
+            font-family: 'Outfit', sans-serif;
             font-size: 1rem;
             cursor: pointer;
-            transition: background-color 0.2s, transform 0.1s;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
         }
 
         button:hover {
-            background: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(99, 102, 241, 0.4);
         }
         
         button:active {
@@ -115,38 +132,87 @@
 
         #result {
             display: none;
-            background: var(--card-bg);
-            padding: 2rem;
-            border-radius: 12px;
+            background: var(--result-bg);
+            padding: 2.5rem;
+            border-radius: 16px;
             border: 1px solid var(--border-color);
-            line-height: 1.6;
+            line-height: 1.7;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+            animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes slideUpFade {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .error {
             color: #ef4444;
             background: #450a0a;
             padding: 1rem;
-            border-radius: 8px;
+            border-radius: 10px;
             border: 1px solid #7f1d1d;
             display: none;
             margin-bottom: 1rem;
         }
 
-        /* Basic Markdown Styles */
+        /* Premium Markdown Styles */
         #result h1, #result h2, #result h3 {
-            margin-top: 1.5em;
-            margin-bottom: 0.5em;
-            color: #e2e8f0;
+            margin-top: 1.8em;
+            margin-bottom: 0.8em;
+            color: #f8fafc;
             text-align: left;
-            -webkit-text-fill-color: initial;
-            background: none;
+            font-weight: 600;
+            letter-spacing: -0.02em;
         }
         
-        #result p { margin-bottom: 1em; }
-        #result ul, #result ol { margin-bottom: 1em; padding-left: 20px; }
-        #result li { margin-bottom: 0.25em; }
-        #result code { background: #0f172a; padding: 0.2em 0.4em; border-radius: 4px; font-family: monospace; }
-        #result pre { background: #0f172a; padding: 1em; border-radius: 8px; overflow-x: auto; }
+        #result h3 {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+            color: #e2e8f0;
+        }
+        
+        #result p { margin-bottom: 1.2em; color: var(--text-muted); }
+        
+        #result ul, #result ol { 
+            margin-bottom: 1.5em; 
+            padding-left: 1.5rem; 
+            color: var(--text-color);
+        }
+        
+        #result li { 
+            margin-bottom: 0.6em; 
+        }
+        
+        #result li > ul {
+            margin-top: 0.6em;
+            margin-bottom: 0;
+            color: var(--text-muted);
+            border-left: 2px solid var(--border-color);
+            padding-left: 1rem;
+            list-style-type: circle;
+        }
+
+        #result strong {
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        #result code { 
+            background: rgba(255,255,255,0.1); 
+            padding: 0.2em 0.4em; 
+            border-radius: 4px; 
+            font-family: monospace; 
+            color: #818cf8;
+        }
+        
+        #result pre { 
+            background: #000000; 
+            padding: 1.5em; 
+            border-radius: 8px; 
+            overflow-x: auto; 
+            border: 1px solid var(--border-color);
+        }
 
         .action-buttons {
             display: flex;
@@ -159,10 +225,13 @@
             background: var(--card-bg);
             border: 1px solid var(--border-color);
             color: var(--text-color);
+            box-shadow: none;
+            background-image: none;
         }
 
         .action-buttons button:hover {
             background: var(--border-color);
+            transform: translateY(-2px);
         }
 
         .history-section {
