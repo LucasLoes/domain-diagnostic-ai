@@ -19,6 +19,17 @@
             --result-bg: #0c0a13; /* Very dark deep contrast */
         }
 
+        [data-theme="light"] {
+            --bg-color: #f8fafc; /* Slate 50 */
+            --text-color: #0f172a; /* Slate 900 */
+            --text-muted: #475569; /* Slate 600 */
+            --accent-color: #4f46e5; /* Indigo 600 */
+            --accent-hover: #4338ca;
+            --border-color: #cbd5e1; /* Slate 300 */
+            --card-bg: #ffffff; /* White */
+            --result-bg: #ffffff; /* White */
+        }
+
         body {
             font-family: 'Outfit', system-ui, -apple-system, sans-serif;
             background-color: var(--bg-color);
@@ -157,34 +168,37 @@
         }
 
         /* Premium Markdown Styles */
-        #result h1, #result h2, #result h3 {
+        #reportContent {
+            color: var(--text-color);
+        }
+
+        #reportContent h1, #reportContent h2, #reportContent h3 {
             margin-top: 1.8em;
             margin-bottom: 0.8em;
-            color: #f8fafc;
+            color: var(--text-color);
             text-align: left;
             font-weight: 600;
             letter-spacing: -0.02em;
         }
         
-        #result h3 {
+        #reportContent h3 {
             border-bottom: 1px solid var(--border-color);
             padding-bottom: 0.5rem;
-            color: #e2e8f0;
         }
         
-        #result p { margin-bottom: 1.2em; color: var(--text-muted); }
+        #reportContent p { margin-bottom: 1.2em; color: var(--text-muted); }
         
-        #result ul, #result ol { 
+        #reportContent ul, #reportContent ol { 
             margin-bottom: 1.5em; 
             padding-left: 1.5rem; 
             color: var(--text-color);
         }
         
-        #result li { 
+        #reportContent li { 
             margin-bottom: 0.6em; 
         }
         
-        #result li > ul {
+        #reportContent li > ul {
             margin-top: 0.6em;
             margin-bottom: 0;
             color: var(--text-muted);
@@ -193,21 +207,21 @@
             list-style-type: circle;
         }
 
-        #result strong {
-            color: #ffffff;
+        #reportContent strong {
+            color: var(--text-color);
             font-weight: 600;
         }
 
-        #result code { 
-            background: rgba(255,255,255,0.1); 
+        #reportContent code { 
+            background: var(--border-color); 
             padding: 0.2em 0.4em; 
             border-radius: 4px; 
             font-family: monospace; 
-            color: #818cf8;
+            color: var(--accent-color);
         }
         
-        #result pre { 
-            background: #000000; 
+        #reportContent pre { 
+            background: var(--card-bg); 
             padding: 1.5em; 
             border-radius: 8px; 
             overflow-x: auto; 
@@ -264,6 +278,38 @@
         .history-tag:hover {
             background: var(--border-color);
         }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            width: 100%;
+        }
+
+        .header-container h1 {
+            margin-bottom: 0;
+            flex: 1;
+        }
+
+        .theme-toggle {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: none;
+            transition: all 0.2s;
+        }
+
+        .theme-toggle:hover {
+            background: var(--border-color);
+            transform: translateY(-2px);
+        }
     </style>
     <!-- Incluir biblioteca marked para converter Markdown em HTML -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -271,7 +317,13 @@
 </head>
 <body>
     <div class="container">
-        <h1>Domain Diagnostic AI</h1>
+        <div class="header-container">
+            <div></div> <!-- Espaçador para centralizar o h1 se necessário, ou flex resolve -->
+            <h1>Domain Diagnostic AI</h1>
+            <button class="theme-toggle" id="themeToggleBtn" onclick="toggleTheme()">
+                <span id="themeIcon">☀️</span>
+            </button>
+        </div>
         
         <div class="search-box" style="flex-direction: column;">
             <div style="display: flex; gap: 1rem; width: 100%;">
@@ -395,14 +447,39 @@
         function baixarPDF() {
             const element = document.getElementById('reportContent');
             const domainValue = document.getElementById('domainInput').value.trim() || 'dominio';
+            
+            const isLightMode = document.documentElement.getAttribute('data-theme') === 'light';
+            const pdfBgColor = isLightMode ? '#ffffff' : '#0c0a13';
+
             const opt = {
                 margin:       0.5,
                 filename:     `diagnostico-${domainValue}.pdf`,
                 image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, backgroundColor: '#0c0a13' },
+                html2canvas:  { scale: 2, backgroundColor: pdfBgColor },
                 jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
             };
             html2pdf().set(opt).from(element).save();
+        }
+
+        // Theme Management
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
+        }
+
+        function updateThemeIcon(theme) {
+            const icon = document.getElementById('themeIcon');
+            icon.textContent = theme === 'light' ? '🌙' : '☀️';
+        }
+
+        // Initialize Theme
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme) {
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateThemeIcon(savedTheme);
         }
 
         let history = JSON.parse(localStorage.getItem('domainHistory') || '[]');
