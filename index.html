@@ -455,16 +455,21 @@
             const pdfBorderColor = isLightMode ? '#cbd5e1' : '#27272a';
             const pdfCardBg = isLightMode ? '#ffffff' : '#18181b';
 
-            // O html2canvas falha com variáveis CSS e tags <style> dinâmicas às vezes.
-            // A solução infalível é aplicar estilos inline em cada elemento temporariamente.
+            // Armazena estilos originais para restaurar depois
             const originalStyles = [];
             const applyTempStyle = (node, prop, value) => {
-                originalStyles.push({ node, prop, value: node.style[prop] });
-                node.style[prop] = value;
+                if(node && node.style) {
+                    originalStyles.push({ node, prop, value: node.style[prop] });
+                    node.style[prop] = value;
+                }
             };
 
+            // Aplica estilos forçados (CORS de fontes do Google e animações podem quebrar o html2canvas)
             applyTempStyle(element, 'color', pdfTextColor);
             applyTempStyle(element, 'backgroundColor', pdfBgColor);
+            applyTempStyle(element, 'fontFamily', 'Arial, Helvetica, sans-serif');
+            applyTempStyle(element, 'animation', 'none');
+            applyTempStyle(element, 'transition', 'none');
 
             element.querySelectorAll('h1, h2, h3').forEach(el => applyTempStyle(el, 'color', pdfTextColor));
             element.querySelectorAll('h3').forEach(el => applyTempStyle(el, 'borderBottom', `1px solid ${pdfBorderColor}`));
@@ -487,7 +492,12 @@
                 margin:       0.5,
                 filename:     `diagnostico-${domainValue}.pdf`,
                 image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, backgroundColor: pdfBgColor },
+                html2canvas:  { 
+                    scale: 2, 
+                    backgroundColor: pdfBgColor,
+                    useCORS: true, // Crucial para não travar na renderização da fonte do Google
+                    logging: true
+                },
                 jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
             };
             
