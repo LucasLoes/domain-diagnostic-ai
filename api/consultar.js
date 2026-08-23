@@ -96,6 +96,64 @@ export default async function handler(req, res) {
             }
         }
 
+        let registroBrData = null;
+        if (dominio.endsWith('.br')) {
+            try {
+                const registroResponse = await fetch(`https://brasilapi.com.br/api/registrobr/v1/${dominio}`, {
+                    headers: { 'User-Agent': 'DomainDiagnosticAI/1.0' }
+                });
+                if (registroResponse.ok) {
+                    registroBrData = await registroResponse.json();
+                }
+            } catch (e) {
+                console.log("Falha ao consultar Registro.br");
+            }
+        }
+
+        let uf = null;
+        let ddd = null;
+
+        if (cepData && cepData.state) {
+            uf = cepData.state;
+        } else if (cnpjData && cnpjData.uf) {
+            uf = cnpjData.uf;
+        }
+
+        if (cnpjData && cnpjData.ddd_telefone_1) {
+            const match = cnpjData.ddd_telefone_1.match(/^(\d{2})/);
+            if (match) {
+                ddd = match[1];
+            }
+        }
+
+        let ibgeUfData = null;
+        if (uf) {
+            try {
+                const ibgeResponse = await fetch(`https://brasilapi.com.br/api/ibge/uf/v1/${uf}`, {
+                    headers: { 'User-Agent': 'DomainDiagnosticAI/1.0' }
+                });
+                if (ibgeResponse.ok) {
+                    ibgeUfData = await ibgeResponse.json();
+                }
+            } catch (e) {
+                console.log("Falha ao consultar IBGE UF");
+            }
+        }
+
+        let dddData = null;
+        if (ddd) {
+            try {
+                const dddResponse = await fetch(`https://brasilapi.com.br/api/ddd/v1/${ddd}`, {
+                    headers: { 'User-Agent': 'DomainDiagnosticAI/1.0' }
+                });
+                if (dddResponse.ok) {
+                    dddData = await dddResponse.json();
+                }
+            } catch (e) {
+                console.log("Falha ao consultar DDD");
+            }
+        }
+
         const prompt = `
         Analise o domínio: ${dominio}.
         ATENÇÃO: O relatório deve ser um RESUMO RÁPIDO, CURTO e DIRETO AO ASSUNTO, contendo SOMENTE os pontos mais importantes para consulta rápida. Use bullet points curtos. Sem introduções ou conclusões longas.
@@ -111,6 +169,9 @@ export default async function handler(req, res) {
         Status HTTP Web: ${JSON.stringify(webStatus)}
         Dados CNPJ: ${cnpjData ? JSON.stringify(cnpjData) : 'Não informado'}
         Dados CEP: ${cepData ? JSON.stringify(cepData) : 'Não informado'}
+        Dados Registro.br: ${registroBrData ? JSON.stringify(registroBrData) : 'Não aplicável ou não encontrado'}
+        Dados Estado (IBGE): ${ibgeUfData ? JSON.stringify(ibgeUfData) : 'Não informado'}
+        Dados Região DDD: ${dddData ? JSON.stringify(dddData) : 'Não informado'}
 
         Cruze as informações (ex: use os dados do CNPJ para preencher lacunas do domínio, como contatos, se o RDAP estiver vazio) para fornecer o relatório mais completo e apurado possível sobre as informações técnicas, administrativas e comerciais.
 
@@ -158,7 +219,16 @@ export default async function handler(req, res) {
         
         res.status(200).json({
             dominio,
-            dados_brutos: { dns: dnsData, rdap: whoisData.entities || "Não público", web: webStatus, cnpj: cnpjData, cep: cepData },
+            dados_brutos: { 
+                dns: dnsData, 
+                rdap: whoisData.entities || "Não público", 
+                web: webStatus, 
+                cnpj: cnpjData, 
+                cep: cepData,
+                registro_br: registroBrData,
+                ibge_uf: ibgeUfData,
+                ddd: dddData
+            },
             relatorio_ia: aiResult.response.text()
         });
 
