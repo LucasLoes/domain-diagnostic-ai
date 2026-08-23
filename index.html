@@ -470,6 +470,7 @@
             applyTempStyle(element, 'fontFamily', 'Arial, Helvetica, sans-serif');
             applyTempStyle(element, 'animation', 'none');
             applyTempStyle(element, 'transition', 'none');
+            applyTempStyle(element, 'opacity', '1');
 
             element.querySelectorAll('h1, h2, h3').forEach(el => applyTempStyle(el, 'color', pdfTextColor));
             element.querySelectorAll('h3').forEach(el => applyTempStyle(el, 'borderBottom', `1px solid ${pdfBorderColor}`));
@@ -496,16 +497,24 @@
                     scale: 2, 
                     backgroundColor: pdfBgColor,
                     useCORS: true, // Crucial para não travar na renderização da fonte do Google
+                    scrollY: 0, // FIX: Resolve o bug de tela em branco quando a página está rolada para baixo
+                    scrollX: 0,
                     logging: true
                 },
                 jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
             };
             
+            // Força o scroll pro topo antes de tirar o print para evitar cortes no html2canvas
+            const currentScroll = window.scrollY;
+            window.scrollTo(0, 0);
+
             html2pdf().set(opt).from(element).save().then(() => {
                 // Restaura os estilos originais
                 originalStyles.forEach(({ node, prop, value }) => {
                     node.style[prop] = value;
                 });
+                // Volta para a posição original
+                window.scrollTo(0, currentScroll);
             });
         }
 
