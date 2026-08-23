@@ -460,8 +460,9 @@
             printWrapper.style.padding = '40px'; // Atua como margem da página PDF
             printWrapper.style.backgroundColor = pdfPageBg;
             printWrapper.style.position = 'absolute';
-            printWrapper.style.left = '-9999px';
+            printWrapper.style.left = '0'; // Corrigido: Não pode ser -9999px senão o html2canvas ignora (gera PDF em branco de 3kb)
             printWrapper.style.top = '0';
+            printWrapper.style.zIndex = '-9999'; // Fica escondido atrás do conteúdo atual
             printWrapper.style.width = '800px'; // Largura fixa para manter a diagramação impecável no PDF
 
             const originalResult = document.getElementById('result');
