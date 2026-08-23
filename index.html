@@ -445,76 +445,80 @@
         }
 
         function baixarPDF() {
-            const element = document.getElementById('reportContent');
             const domainValue = document.getElementById('domainInput').value.trim() || 'dominio';
             
             const isLightMode = document.documentElement.getAttribute('data-theme') === 'light';
-            const pdfBgColor = isLightMode ? '#ffffff' : '#0c0a13';
+            const pdfPageBg = isLightMode ? '#f8fafc' : '#09090b';
+            const pdfResultBg = isLightMode ? '#ffffff' : '#0c0a13';
             const pdfTextColor = isLightMode ? '#0f172a' : '#ffffff';
             const pdfMutedColor = isLightMode ? '#475569' : '#a1a1aa';
             const pdfBorderColor = isLightMode ? '#cbd5e1' : '#27272a';
             const pdfCardBg = isLightMode ? '#ffffff' : '#18181b';
 
-            // Armazena estilos originais para restaurar depois
-            const originalStyles = [];
-            const applyTempStyle = (node, prop, value) => {
-                if(node && node.style) {
-                    originalStyles.push({ node, prop, value: node.style[prop] });
-                    node.style[prop] = value;
-                }
-            };
+            // Cria um wrapper dedicado para o PDF ter controle absoluto do layout e fundo
+            const printWrapper = document.createElement('div');
+            printWrapper.style.padding = '40px'; // Atua como margem da página PDF
+            printWrapper.style.backgroundColor = pdfPageBg;
+            printWrapper.style.position = 'absolute';
+            printWrapper.style.left = '-9999px';
+            printWrapper.style.top = '0';
+            printWrapper.style.width = '800px'; // Largura fixa para manter a diagramação impecável no PDF
 
-            // Aplica estilos forçados (CORS de fontes do Google e animações podem quebrar o html2canvas)
-            applyTempStyle(element, 'color', pdfTextColor);
-            applyTempStyle(element, 'backgroundColor', pdfBgColor);
-            applyTempStyle(element, 'fontFamily', 'Arial, Helvetica, sans-serif');
-            applyTempStyle(element, 'animation', 'none');
-            applyTempStyle(element, 'transition', 'none');
-            applyTempStyle(element, 'opacity', '1');
+            const originalResult = document.getElementById('result');
+            const clone = originalResult.cloneNode(true);
+            
+            // Esconde botões no PDF
+            const actionButtons = clone.querySelector('.action-buttons');
+            if (actionButtons) actionButtons.style.display = 'none';
 
-            element.querySelectorAll('h1, h2, h3').forEach(el => applyTempStyle(el, 'color', pdfTextColor));
-            element.querySelectorAll('h3').forEach(el => applyTempStyle(el, 'borderBottom', `1px solid ${pdfBorderColor}`));
-            element.querySelectorAll('p').forEach(el => applyTempStyle(el, 'color', pdfMutedColor));
-            element.querySelectorAll('ul, ol, li, strong').forEach(el => applyTempStyle(el, 'color', pdfTextColor));
-            element.querySelectorAll('li > ul').forEach(el => {
-                applyTempStyle(el, 'color', pdfMutedColor);
-                applyTempStyle(el, 'borderLeft', `2px solid ${pdfBorderColor}`);
+            // Força estilos no clone do #result
+            clone.style.backgroundColor = pdfResultBg;
+            clone.style.border = `1px solid ${pdfBorderColor}`;
+            clone.style.color = pdfTextColor;
+            clone.style.fontFamily = 'Arial, Helvetica, sans-serif';
+            clone.style.animation = 'none';
+            clone.style.transition = 'none';
+            clone.style.opacity = '1';
+            clone.style.display = 'block';
+
+            // Força estilos literais nos elementos internos do clone (bypass no bug de CSS vars do html2canvas)
+            clone.querySelectorAll('h1, h2, h3').forEach(el => el.style.color = pdfTextColor);
+            clone.querySelectorAll('h3').forEach(el => el.style.borderBottom = `1px solid ${pdfBorderColor}`);
+            clone.querySelectorAll('p').forEach(el => el.style.color = pdfMutedColor);
+            clone.querySelectorAll('ul, ol, li, strong').forEach(el => el.style.color = pdfTextColor);
+            clone.querySelectorAll('li > ul').forEach(el => {
+                el.style.color = pdfMutedColor;
+                el.style.borderLeft = `2px solid ${pdfBorderColor}`;
             });
-            element.querySelectorAll('code').forEach(el => {
-                applyTempStyle(el, 'backgroundColor', pdfBorderColor);
-                applyTempStyle(el, 'color', isLightMode ? '#4f46e5' : '#818cf8');
+            clone.querySelectorAll('code').forEach(el => {
+                el.style.backgroundColor = pdfBorderColor;
+                el.style.color = isLightMode ? '#4f46e5' : '#818cf8';
             });
-            element.querySelectorAll('pre').forEach(el => {
-                applyTempStyle(el, 'backgroundColor', pdfCardBg);
-                applyTempStyle(el, 'border', `1px solid ${pdfBorderColor}`);
+            clone.querySelectorAll('pre').forEach(el => {
+                el.style.backgroundColor = pdfCardBg;
+                el.style.border = `1px solid ${pdfBorderColor}`;
             });
+
+            printWrapper.appendChild(clone);
+            document.body.appendChild(printWrapper);
 
             const opt = {
-                margin:       0.5,
+                margin:       0, // Margem zero pois o printWrapper já gerencia as bordas do papel
                 filename:     `diagnostico-${domainValue}.pdf`,
-                image:        { type: 'jpeg', quality: 0.98 },
+                image:        { type: 'jpeg', quality: 1 },
                 html2canvas:  { 
                     scale: 2, 
-                    backgroundColor: pdfBgColor,
-                    useCORS: true, // Crucial para não travar na renderização da fonte do Google
-                    scrollY: 0, // FIX: Resolve o bug de tela em branco quando a página está rolada para baixo
-                    scrollX: 0,
-                    logging: true
+                    backgroundColor: pdfPageBg, 
+                    useCORS: true,
+                    scrollY: 0, 
+                    scrollX: 0
                 },
                 jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
             };
             
-            // Força o scroll pro topo antes de tirar o print para evitar cortes no html2canvas
-            const currentScroll = window.scrollY;
-            window.scrollTo(0, 0);
-
-            html2pdf().set(opt).from(element).save().then(() => {
-                // Restaura os estilos originais
-                originalStyles.forEach(({ node, prop, value }) => {
-                    node.style[prop] = value;
-                });
-                // Volta para a posição original
-                window.scrollTo(0, currentScroll);
+            html2pdf().set(opt).from(printWrapper).save().then(() => {
+                // Limpa o wrapper temporário após gerar o PDF
+                document.body.removeChild(printWrapper);
             });
         }
 
