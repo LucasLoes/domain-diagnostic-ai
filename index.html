@@ -450,6 +450,28 @@
             
             const isLightMode = document.documentElement.getAttribute('data-theme') === 'light';
             const pdfBgColor = isLightMode ? '#ffffff' : '#0c0a13';
+            const pdfTextColor = isLightMode ? '#0f172a' : '#ffffff';
+            const pdfMutedColor = isLightMode ? '#475569' : '#a1a1aa';
+            const pdfBorderColor = isLightMode ? '#cbd5e1' : '#27272a';
+            const pdfCardBg = isLightMode ? '#ffffff' : '#18181b';
+
+            // O html2canvas (usado pelo html2pdf) tem bugs conhecidos com variáveis CSS.
+            // Injetamos um estilo temporário com cores hex literais para a exportação.
+            const style = document.createElement('style');
+            style.id = 'pdf-fix-style';
+            style.innerHTML = `
+                #reportContent { color: ${pdfTextColor} !important; background-color: ${pdfBgColor} !important; }
+                #reportContent h1, #reportContent h2, #reportContent h3 { color: ${pdfTextColor} !important; }
+                #reportContent h3 { border-bottom-color: ${pdfBorderColor} !important; }
+                #reportContent p { color: ${pdfMutedColor} !important; }
+                #reportContent ul, #reportContent ol { color: ${pdfTextColor} !important; }
+                #reportContent li { color: ${pdfTextColor} !important; }
+                #reportContent li > ul { color: ${pdfMutedColor} !important; border-left-color: ${pdfBorderColor} !important; }
+                #reportContent strong { color: ${pdfTextColor} !important; }
+                #reportContent code { background-color: ${pdfBorderColor} !important; }
+                #reportContent pre { background-color: ${pdfCardBg} !important; border-color: ${pdfBorderColor} !important; }
+            `;
+            document.head.appendChild(style);
 
             const opt = {
                 margin:       0.5,
@@ -458,7 +480,14 @@
                 html2canvas:  { scale: 2, backgroundColor: pdfBgColor },
                 jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
             };
-            html2pdf().set(opt).from(element).save();
+            
+            html2pdf().set(opt).from(element).save().then(() => {
+                // Remove o estilo temporário após a geração do PDF
+                const styleElement = document.getElementById('pdf-fix-style');
+                if (styleElement) {
+                    styleElement.remove();
+                }
+            });
         }
 
         // Theme Management
